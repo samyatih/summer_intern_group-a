@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import API from "@/services/auth";
-import { useAuth } from "@/context/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +18,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +32,7 @@ export default function Login() {
 
   const [error, setError] = useState("");
 
-  const handleLogin = async (
+  const handleRegister = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
@@ -44,31 +42,17 @@ export default function Login() {
     setError("");
 
     try {
-      const formData = new URLSearchParams();
-
-      formData.append("username", email);
-
-      formData.append("password", password);
-
-      const response = await API.post(
-        "/api/auth/login",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "application/x-www-form-urlencoded",
-          },
-        }
-      );
-
-      login(response.data.access_token);
+      await API.post("/api/auth/register", {
+        email,
+        password,
+      });
 
       setSuccess(
-        "Login successful! Redirecting to dashboard..."
+        "Registration successful! Redirecting to Login..."
       );
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/login");
       }, 1500);
     } catch (err: any) {
       if (err.response) {
@@ -91,29 +75,24 @@ export default function Login() {
         <BookOpen className="w-16 h-16 mb-8" />
 
         <h1 className="text-5xl font-extrabold mb-6">
-          LMS Portal
+          Welcome to Gamified LMS
         </h1>
 
         <p className="text-xl leading-9 text-blue-100">
           Learn smarter.
           <br />
-          Track your progress.
+          Complete lessons.
           <br />
-          Earn XP.
+          Earn XP & Badges.
           <br />
           Maintain your streak.
         </p>
 
         <div className="mt-16 space-y-5 text-lg">
-
-          <p>✔ Personalized Learning</p>
-
-          <p>✔ Progress Tracking</p>
-
-          <p>✔ Gamified Experience</p>
-
-          <p>✔ Video Based Courses</p>
-
+          <p>🎯 Personalized Learning</p>
+          <p>🏆 Earn XP & Unlock Levels</p>
+          <p>🔥 Maintain Daily Streaks</p>
+          <p>📺 Interactive Video Lessons</p>
         </div>
 
       </div>
@@ -127,19 +106,19 @@ export default function Login() {
           <CardContent className="p-10">
 
             <h2 className="text-4xl font-bold text-center">
-              Welcome Back
+              Create Account
             </h2>
 
             <p className="text-center text-gray-500 mt-2 mb-8">
-              Sign in to continue learning
+              Join the Gamified LMS today
             </p>
 
             <form
-               onSubmit={handleLogin}
-               className="space-y-5"
->
-            
-                          {/* Email */}
+              onSubmit={handleRegister}
+              className="space-y-5"
+            >
+
+              {/* Email */}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">
@@ -147,36 +126,40 @@ export default function Login() {
                 </label>
 
                 <div className="relative">
+
                   <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
 
                   <Input
                     type="email"
                     placeholder="Enter your email"
                     value={email}
-                    onChange={(e) =>
-                      setEmail(e.target.value)
-                    }
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-12 rounded-xl"
                     required
                   />
+
                 </div>
               </div>
 
               {/* Password */}
 
               <div className="space-y-2">
+
                 <label className="text-sm font-medium">
                   Password
                 </label>
 
                 <div className="relative">
+
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
 
                   <Input
                     type={
-                      showPassword ? "text" : "password"
+                      showPassword
+                        ? "text"
+                        : "password"
                     }
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     value={password}
                     onChange={(e) =>
                       setPassword(e.target.value)
@@ -188,20 +171,25 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() =>
-                      setShowPassword(!showPassword)
+                      setShowPassword(
+                        !showPassword
+                      )
                     }
                     className="absolute right-3 top-3 text-gray-500 hover:text-black"
                   >
+
                     {showPassword ? (
                       <EyeOff size={20} />
                     ) : (
                       <Eye size={20} />
                     )}
-                  </button>
-                </div>
-              </div>
 
-              {/* Success */}
+                  </button>
+
+                </div>
+
+              </div>
+                            {/* Success Message */}
 
               {success && (
                 <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
@@ -210,7 +198,7 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Error */}
+              {/* Error Message */}
 
               {error && (
                 <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
@@ -227,27 +215,37 @@ export default function Login() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Signing In...
+                    Creating Account...
                   </>
                 ) : (
-                  "Sign In"
+                  "Create Account"
                 )}
               </Button>
+
             </form>
 
             <div className="mt-8 text-center text-sm text-gray-600">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <Link
-                to="/register"
+                to="/login"
                 className="font-semibold text-blue-600 hover:text-blue-700"
               >
-                Register
+                Login
               </Link>
             </div>
 
+            <div className="mt-8 border-t pt-6 text-center">
+              <p className="text-xs text-gray-400">
+                © 2026 Gamified LMS. Learn • Earn XP • Grow
+              </p>
+            </div>
+
           </CardContent>
+
         </Card>
+
       </div>
+
     </div>
   );
 }
