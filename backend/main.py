@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, create_engine, Session, select
 from contextlib import asynccontextmanager
 import os
@@ -33,6 +34,14 @@ async def lifespan(app: FastAPI):
     print("Shutting down ")
 
 app = FastAPI(title='LMS Core API', lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

@@ -25,13 +25,9 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
   const [success, setSuccess] = useState("");
-
   const [error, setError] = useState("");
 
   const handleLogin = async (
@@ -45,9 +41,7 @@ export default function Login() {
 
     try {
       const formData = new URLSearchParams();
-
       formData.append("username", email);
-
       formData.append("password", password);
 
       const response = await API.post(
@@ -105,15 +99,10 @@ export default function Login() {
         </p>
 
         <div className="mt-16 space-y-5 text-lg">
-
           <p>✔ Personalized Learning</p>
-
           <p>✔ Progress Tracking</p>
-
           <p>✔ Gamified Experience</p>
-
           <p>✔ Video Based Courses</p>
-
         </div>
 
       </div>
@@ -135,11 +124,11 @@ export default function Login() {
             </p>
 
             <form
-               onSubmit={handleLogin}
-               className="space-y-5"
->
-            
-                          {/* Email */}
+              onSubmit={handleLogin}
+              className="space-y-5"
+            >
+
+              {/* Email */}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">

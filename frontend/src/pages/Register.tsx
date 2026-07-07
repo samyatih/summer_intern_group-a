@@ -23,13 +23,9 @@ export default function Register() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
   const [success, setSuccess] = useState("");
-
   const [error, setError] = useState("");
 
   const handleRegister = async (
@@ -189,7 +185,8 @@ export default function Register() {
                 </div>
 
               </div>
-                            {/* Success Message */}
+
+              {/* Success Message */}
 
               {success && (
                 <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
