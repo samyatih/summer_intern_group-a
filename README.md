@@ -97,36 +97,23 @@ The repository includes source code, datasets, notebooks, documentation, reports
 
 ## Project Title
 
-**<Enter Final Project Title Here>**
+**Gamified Learning Management System (LMS) with YouTube Ingestion**
 
 ---
 
 ## Project Category
 
-- Machine Learning / Deep Learning Project  
-
 - Software Development Project  
-
-- Data Analysis Project  
-
-- Research-Oriented Project  
-
-- Other: <Mention here>
 
 ---
 
 ## Problem Statement
 
-<Write the complete problem statement here.>
+Traditional Learning Management Systems (LMS) often suffer from low student engagement and completion rates. Furthermore, while there is a vast amount of high-quality educational content available on platforms like YouTube, there is no built-in way to track personal progress, earn rewards, or maintain accountability when learning from these playlists.
 
-The problem statement should clearly explain:
+This project addresses this problem by building a **Gamified LMS Platform**. 
+The system allows users to seamlessly ingest any YouTube playlist into the platform and dynamically generates a structured course roadmap. As students watch videos and complete lessons, they earn Experience Points (XP), level up, and maintain daily learning streaks—applying proven gamification mechanics to dramatically increase engagement and completion rates.
 
-- What problem is being addressed
-
-- Why the problem is important
-
-- What data, system, or method will be used
-
-- What output or solution is expected from the project
+For detailed instructions on the technology stack, data flow, and how to run the application locally, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
