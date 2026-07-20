@@ -154,16 +154,29 @@ async def ingest_playlist(
             raise HTTPException(status_code=404, detail="YouTube playlist not found.")
 
         snippet = playlist_data["items"][0]["snippet"]
-        
+
+        existing_playlist = session.exec(
+            select(Playlist).where(
+                Playlist.user_id == current_user.id,
+                Playlist.yt_playlist_id == request.playlist_id
+            )
+        ).first()
+
+        if existing_playlist:
+            raise HTTPException(
+                status_code=400,
+                detail="Playlist already imported."
+            )
+                
         # 2. Save Playlist to CockroachDB (Matches models.py EXACTLY)
         new_playlist = Playlist(
-            yt_playlist_id=request.playlist_id, 
+            user_id=current_user.id,
+            yt_playlist_id=request.playlist_id,
             title=snippet.get("title", "Unknown Title"),
             description=snippet.get("description", "")
         )
         session.add(new_playlist)
-        session.commit()
-        session.refresh(new_playlist)
+        session.flush() 
 
         # 3. Fetch all Videos in the Playlist
         videos_to_insert = []
@@ -205,6 +218,7 @@ async def ingest_playlist(
         # 5. Bulk save videos to Database
         session.add_all(videos_to_insert)
         session.commit()
+        session.refresh(new_playlist)
 
     return {
         "message": "Playlist ingested successfully",
@@ -213,29 +227,76 @@ async def ingest_playlist(
     }
 
 @app.get("/api/playlists")
-def get_playlists(session: Session = Depends(get_session)):
-    playlists = session.exec(select(Playlist).order_by(Playlist.created_at.desc())).all()
+def get_playlists(
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    playlists = session.exec(
+        select(Playlist)
+        .where(Playlist.user_id == current_user.id)
+        .order_by(Playlist.created_at.desc())
+    ).all()
+
     result = []
+
     for p in playlists:
-        v_count = session.exec(select(Video).where(Video.playlist_id == p.id).order_by(Video.sequence_order)).all()
+        videos = session.exec(
+            select(Video)
+            .where(Video.playlist_id == p.id)
+            .order_by(Video.sequence_order)
+        ).all()
+
         p_dict = p.model_dump()
-        p_dict["video_count"] = len(v_count)
-        
-        # Get thumbnail from the first video
-        if len(v_count) > 0:
-            first_video = v_count[0]
+        p_dict["video_count"] = len(videos)
+
+        # Thumbnail
+        if videos:
+            first_video = videos[0]
             try:
-                # Try to get high-res thumbnail from saved youtube metadata
-                thumb_url = first_video.yt_metadata.get("thumbnails", {}).get("high", {}).get("url")
+                thumb_url = (
+                    first_video.yt_metadata
+                    .get("thumbnails", {})
+                    .get("high", {})
+                    .get("url")
+                )
                 if not thumb_url:
-                    thumb_url = f"https://img.youtube.com/vi/{first_video.yt_video_id}/hqdefault.jpg"
+                    thumb_url = (
+                        f"https://img.youtube.com/vi/"
+                        f"{first_video.yt_video_id}/hqdefault.jpg"
+                    )
                 p_dict["thumbnail_url"] = thumb_url
             except Exception:
-                p_dict["thumbnail_url"] = f"https://img.youtube.com/vi/{first_video.yt_video_id}/hqdefault.jpg"
+                p_dict["thumbnail_url"] = (
+                    f"https://img.youtube.com/vi/"
+                    f"{first_video.yt_video_id}/hqdefault.jpg"
+                )
         else:
             p_dict["thumbnail_url"] = None
-            
+
+        # -------- Progress --------
+
+        video_ids = [video.id for video in videos]
+
+        completed_videos = 0
+
+        if video_ids:
+            completed_videos = len(
+                session.exec(
+                    select(UserProgress).where(
+                        UserProgress.user_id == current_user.id,
+                        UserProgress.video_id.in_(video_ids),
+                        UserProgress.is_completed == True
+                    )
+                ).all()
+            )
+
+        p_dict["completed_videos"] = completed_videos
+        p_dict["is_completed"] = (
+            len(videos) > 0 and completed_videos == len(videos)
+        )
+
         result.append(p_dict)
+
     return result
 
 @app.get("/api/playlists/{playlist_id}/videos")
@@ -244,6 +305,19 @@ def get_playlist_videos(
     current_user: User = Depends(get_current_user), 
     session: Session = Depends(get_session)
 ):
+    playlist = session.exec(
+        select(Playlist).where(
+            Playlist.id == playlist_id,
+            Playlist.user_id == current_user.id
+        )
+    ).first()
+
+    if not playlist:
+        raise HTTPException(
+            status_code=404,
+            detail="Playlist not found."
+        )
+    
     videos = session.exec(select(Video).where(Video.playlist_id == playlist_id).order_by(Video.sequence_order)).all()
     progress_records = session.exec(select(UserProgress).where(UserProgress.user_id == current_user.id)).all()
     progress_lookup = {
@@ -296,12 +370,22 @@ def update_video_progress(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
+
     BUFFER = 15.0  # seconds of tolerance
 
     # Check if video exists
     video = session.get(Video, request.video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
+    
+
+    playlist = session.get(Playlist, video.playlist_id)
+
+    if not playlist or playlist.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have access to this playlist."
+        )
 
     # Sequential locking: verify all prior videos in the playlist are completed
     prior_videos = session.exec(
@@ -396,4 +480,4 @@ def update_video_progress(
         "total_xp": current_user.total_xp,
         "current_level": current_user.current_level,
         "leveled_up": leveled_up
-    }
+    }

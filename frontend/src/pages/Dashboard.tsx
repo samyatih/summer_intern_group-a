@@ -156,56 +156,117 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Courses Section */}
-        <div className="pt-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h2 className="text-2xl font-semibold">Your Courses</h2>
-            <Button onClick={() => setShowModal(true)} variant="default" className="active:scale-95 transition-transform">
-              <Plus className="mr-2 h-4 w-4" /> Import Playlist
-            </Button>
-          </div>
+          {/* Courses Section */}
+          <div className="pt-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <h2 className="text-2xl font-semibold">Your Courses</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {playlists.length === 0 ? (
-              <div className="col-span-2 text-center py-16 px-6 rounded-lg border border-dashed border-border">
-                <p className="text-muted-foreground mb-4">No courses yet. Import a playlist to get started.</p>
-                <Button onClick={() => setShowModal(true)} variant="outline">
-                  Import your first playlist
-                </Button>
-              </div>
-            ) : playlists.map((playlist) => (
-              <Card
-                key={playlist.id}
-                className="glass-card flex flex-col hover:-translate-y-1 hover:border-primary/30 overflow-hidden"
+              <Button
+                onClick={() => setShowModal(true)}
+                variant="default"
+                className="active:scale-95 transition-transform"
               >
-                <div className="h-40 w-full overflow-hidden bg-muted">
-                  <img
-                    src={playlist.thumbnail_url || `https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80`}
-                    alt="Course Thumbnail"
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
+                <Plus className="mr-2 h-4 w-4" />
+                Import Playlist
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {playlists.length === 0 ? (
+                <div className="col-span-2 text-center py-16 px-6 rounded-lg border border-dashed border-border">
+                  <p className="text-muted-foreground mb-4">
+                    No courses yet. Import a playlist to get started.
+                  </p>
+
+                  <Button
+                    onClick={() => setShowModal(true)}
+                    variant="outline"
+                  >
+                    Import your first playlist
+                  </Button>
                 </div>
-                <CardHeader className="pt-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge variant="secondary">
-                      {playlist.video_count} Videos
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-lg line-clamp-1">{playlist.title}</CardTitle>
-                  <CardDescription className="mt-1 line-clamp-2">{playlist.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="mt-auto pt-2 pb-6">
-                  <Link to={`/playlist/${playlist.id}`} className="block w-full">
-                    <Button className="w-full active:scale-95 transition-transform" variant="default">
-                      <PlayCircle className="mr-2 h-4 w-4" /> Continue
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+              ) : (
+                playlists.map((playlist) => {
+                  const progress =
+                    playlist.video_count === 0
+                      ? 0
+                      : (playlist.completed_videos / playlist.video_count) * 100;
+
+                  return (
+                    <Card
+                      key={playlist.id}
+                      className="glass-card flex flex-col hover:-translate-y-1 hover:border-primary/30 overflow-hidden"
+                    >
+                      <div className="h-40 w-full overflow-hidden bg-muted">
+                        <img
+                          src={
+                            playlist.thumbnail_url ||
+                            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                          }
+                          alt="Course Thumbnail"
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                      </div>
+
+                      <CardHeader className="pt-5">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex gap-2">
+                            <Badge variant="secondary">
+                              {playlist.video_count} Videos
+                            </Badge>
+
+                            {playlist.is_completed && (
+                              <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                                Completed
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        <CardTitle className="text-lg line-clamp-1">
+                          {playlist.title}
+                        </CardTitle>
+
+                        <CardDescription className="mt-1 line-clamp-2">
+                          {playlist.description}
+                        </CardDescription>
+                      </CardHeader>
+
+                      <CardContent className="mt-auto pt-2 pb-6">
+                        <div className="flex justify-between items-center text-sm mb-2">
+                          <span className="text-muted-foreground">
+                            {playlist.completed_videos} / {playlist.video_count} completed
+                          </span>
+
+                          <span className="font-semibold">
+                            {Math.round(progress)}%
+                          </span>
+                        </div>
+
+                        <Progress
+                          value={progress}
+                          className="h-2 mb-4"
+                        />
+
+                        <Link
+                          to={`/playlist/${playlist.id}`}
+                          className="block w-full"
+                        >
+                          <Button
+                            className="w-full active:scale-95 transition-transform"
+                            variant="default"
+                          >
+                            <PlayCircle className="mr-2 h-4 w-4" />
+                            Continue
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
       {/* Import Modal */}
       {showModal && (
@@ -264,6 +325,7 @@ export default function Dashboard() {
           </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }
